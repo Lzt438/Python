@@ -1,0 +1,71 @@
+#爬虫部分代码
+import requests
+
+from lxml import etree
+
+import pandas as pd
+
+df = pd.DataFrame()
+
+headers = {
+
+'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.122 UBrowser/4.0.3214.0 Safari/537.36'
+
+}
+
+for page in range(0, 10):
+
+  res = requests.get('https://maoyan.com/board/4?requestCode=36ab6b13b9ed768d4cbc767966c850dfligic&offset='+str(page*10), headers=headers).text
+
+  res_html=etree.HTML(res)
+
+  d = res_html.xpath('.//dl[@class="board-wrapper"]/dd')
+
+  for i in d:
+
+    title = ''.join(i.xpath('./div/div/div[1]/p[1]/a/text()'))
+
+    score = ''.join(i.xpath('./div/div/div[2]/p//text()'))
+
+    releasetime = ''.join(i.xpath('./div/div/div[1]/p[3]/text()'))
+
+    star = ''.join(i.xpath('./div/div/div[1]/p[2]/text()')).strip().replace('主演：', '').replace(',','、')
+
+    print(title, score, releasetime, star, sep='|')
+
+    data = pd.DataFrame({'电影名称': [title], '评分': [score], '上映时间': [releasetime], '主演': [star]})
+
+    df = pd.concat([df, data])  
+
+df.to_csv('maoyan100.csv', encoding='utf-8',index=False)
+
+#简单分析电影上映年份分布
+df = pd.read_csv(r'C:\Users\Administrator\maoyan100.csv', encoding='gbk')
+
+df['上映时间'] = df['上映时间'].str[5:9]
+df['上映时间'] = df['上映时间'].astype(int)
+bins = [1980, 1989, 1999, 2009, 2020]
+df['上映时间'] = pd.cut(df['上映时间'], bins, labels=['90年前', '90年代', '00年后', '10年后'])
+df_pie = df['上映时间'].value_counts()
+fig, ax = plt.subplots(figsize=(12, 8))
+plt.pie(df_pie, labels=df_pie.index, explode=(0.1, 0, 0, 0), autopct='%1.1f%%', shadow=True, colors=['#01da96', '#02a4de', '#87c847', '#dd3032'])
+fig.text(x=0.3, y=0.90, s='Top100电影年份上映分布', fontsize=32, weight='bold', color='white', backgroundcolor='#c5b783')
+
+#简单分析100部电影中演员出演次数
+star = {}
+
+for i in df['主演'].str.split('、'):
+
+  for j in i:
+
+    if not j in star.keys():
+
+      star[j] = 1
+
+    else:
+
+      star[j] += 1
+
+star = pd.Series(star).sort_values(ascending=False)
+
+print(star[star > 2])
