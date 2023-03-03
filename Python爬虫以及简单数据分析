@@ -50,7 +50,7 @@ df_pie = df['上映时间'].value_counts()
 fig, ax = plt.subplots(figsize=(12, 8))
 plt.pie(df_pie, labels=df_pie.index, explode=(0.1, 0, 0, 0), autopct='%1.1f%%', shadow=True, colors=['#01da96', '#02a4de', '#87c847', '#dd3032'])
 fig.text(x=0.3, y=0.90, s='Top100电影年份上映分布', fontsize=32, weight='bold', color='white', backgroundcolor='#c5b783')
-
+![image]()
 #简单分析100部电影中演员出演次数大于2的演员
 star = {}
 
